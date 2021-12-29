@@ -159,7 +159,14 @@ geekbench5() {
 	echo -e "Running Geekbench5 CPU Benchmark. This will take a few minutes..."
 	GEEKBENCH_PATH=$HOME/geekbench
 	mkdir -p $GEEKBENCH_PATH
-	curl -s http://cdn.geekbench.com/Geekbench-5.1.0-Linux.tar.gz  | tar xz --strip-components=1 -C $GEEKBENCH_PATH
+  if [[ $arch == x86_64* ]]; then
+    echo "Geekbench: X64 Architecture"
+    curl -s http://cdn.geekbench.com/Geekbench-5.4.0-Linux.tar.gz  | tar xz --strip-components=1 -C $GEEKBENCH_PATH
+  elif  [[ $arch == arm* ]]; then
+    echo "Geekbench: ARM Architecture"
+    curl -s http://cdn.geekbench.com/Geekbench-5.4.0-LinuxARMPreview.tar.gz  | tar xz --strip-components=1 -C $GEEKBENCH_PATH
+  fi
+	
 	GEEKBENCH_TEST=$($GEEKBENCH_PATH/geekbench5 | grep "https://browser")
 	GEEKBENCH_URL=$(echo -e $GEEKBENCH_TEST | head -1)
 	GEEKBENCH_URL_CLAIM=$(echo $GEEKBENCH_URL | awk '{ print $2 }')
