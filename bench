@@ -150,7 +150,7 @@ io_test() {
 geekbench5() {
   # Check if system has at least 2GB RAM in order to run Geekbench 5
   ram=$(free -m | awk '/Mem/ {print $2}')
-  if [ $ram -lt 2048 ]
+  if [ $ram -lt 1900 ]
   then
       echo "RAM:" $ram"MB"
       echo "Error: Not enough memory available. Geekbench 5 requires as least 2GB"
