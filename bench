@@ -147,6 +147,12 @@ io_test() {
    sleep 10
 }
 
+iops512k_test() {
+    # Run rand read/write mixed 512kb fio test
+   fio --name=rand_rw_512k --ioengine=libaio --rw=randrw --rwmixread=50 --bs=512k --iodepth=64 --numjobs=1 --size=2G --runtime=30 --gtod_reduce=1 --direct=1 --filename=$RANDOM"_IOTEST" | grep "iops" | awk '{print $7}' | sed 's/,//g' | sed 's/avg=//g'
+   rm *_IOTEST
+   sleep 10
+}
 
 geekbench5() {
   # Check if system has at least 2GB RAM in order to run Geekbench 5
@@ -162,19 +168,19 @@ geekbench5() {
 	mkdir -p $GEEKBENCH_PATH
     arch=$(uname -m)
   if [[ $arch == x86_64* ]]; then
-    echo "Geekbench: X64 Architecture"
+    echo "Geekbench v5: X64 Architecture"
     curl -s http://cdn.geekbench.com/Geekbench-5.4.0-Linux.tar.gz  | tar xz --strip-components=1 -C $GEEKBENCH_PATH
     GEEKBENCH_TEST=$($GEEKBENCH_PATH/geekbench5 | grep "https://browser")
   elif  [[ $arch == aarch64* ]]; then
-    echo "Geekbench: aarch64 Architecture"
+    echo "Geekbench v5: aarch64 Architecture"
     curl -s http://cdn.geekbench.com/Geekbench-5.4.0-LinuxARMPreview.tar.gz  | tar xz --strip-components=1 -C $GEEKBENCH_PATH
     GEEKBENCH_TEST=$($GEEKBENCH_PATH/geekbench5 | grep "https://browser")
   elif  [[ $arch == arm* ]]; then
-    echo "Geekbench: ARM Architecture"
+    echo "Geekbench v5: ARM Architecture"
     curl -s http://cdn.geekbench.com/Geekbench-5.4.0-LinuxARMPreview.tar.gz  | tar xz --strip-components=1 -C $GEEKBENCH_PATH
     GEEKBENCH_TEST=$($GEEKBENCH_PATH/geekbench5_armv7 | grep "https://browser")
   elif  [[ $arch == unknown* ]]; then
-    echo "Geekbench: Architecture dedection failed..."
+    echo "Geekbench v5: Architecture dedection failed..."
     return 1
   fi
 	GEEKBENCH_URL=$(echo -e $GEEKBENCH_TEST | head -1)
@@ -184,9 +190,9 @@ geekbench5() {
 	GEEKBENCH_SCORES_SINGLE=$(curl -s $GEEKBENCH_URL | grep "class='score'" | head -2 | tr -d \'\" | sed 's/class=score//g' | sed "s/ //g" | sed -n 's:.*<div>\(.*\)</div>.*:\1:p' | head -n 1)
 	GEEKBENCH_SCORES_MULTI=$(curl -s $GEEKBENCH_URL | grep "class='score'" | head -2 | tr -d \'\" | sed 's/class=score//g' | sed "s/ //g" | sed -n 's:.*<div>\(.*\)</div>.*:\1:p' | sed -n 2p)
 	echo -ne "\e[1A"; echo -ne "\033[0K\r"
-	echo -e "Geekbench v5"
 	echo -e "Single Core          :" ${BLUE} $GEEKBENCH_SCORES_SINGLE ${PLAIN}
 	echo -e "Multi Core           :" ${YELLOW} $GEEKBENCH_SCORES_MULTI ${PLAIN}
+  echo -e "Geekbench Result     :" ${GREEN}$GEEKBENCH_URL${PLAIN}
 	rm -rf geekbench/
 }
 
@@ -261,6 +267,10 @@ rawio3=$( echo $io3 | sed 's/MB//g' | sed 's/s//g' | sed 's/.$//')
 ioall=$( awk 'BEGIN{print '$rawio1' + '$rawio2' + '$rawio3'}' )
 ioavg=$( awk 'BEGIN{printf "%.1f", '$ioall' / 3}' )
 echo -e "Average I/O bandwidth    : ${YELLOW}$ioavg MB/s${PLAIN}"
+iopsresult=$( iops512k_test )
+readarray -t y <<<"$iopsresult"
+echo -e "I/O bandwidth 512K IOPS  : ${YELLOW}Read: ${y[0]} IOPS${PLAIN}"
+echo -e "I/O bandwidth 512K IOPS  : ${YELLOW}Write: ${y[1]} IOPS${PLAIN}"
 next
 printf "%-32s%-24s%-14s\n" "Location" "Latency"
 ping_result
