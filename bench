@@ -100,7 +100,7 @@ next() {
 }
 
 speed_test() {
-    local output=$(LANG=C wget -O /dev/null -T30 $1 2>&1)
+    local output=$(LANG=C wget -O /dev/null -T 30 -t 1 $1 2>&1)
     local speedtest=$(printf '%s' "$output" | awk '/\/dev\/null/ {speed=$3 $4} END {gsub(/\(|\)/,"",speed); print speed}')
     local nodeName=$2
     printf "${YELLOW}%-32s${GREEN}%-24s${RED}%-14s${PLAIN}\n" "${nodeName}" "${speedtest}"
