@@ -192,7 +192,7 @@ geekbench5() {
 	echo -ne "\e[1A"; echo -ne "\033[0K\r"
 	echo -e "Single Core          :" ${BLUE} $GEEKBENCH_SCORES_SINGLE ${PLAIN}
 	echo -e "Multi Core           :" ${YELLOW} $GEEKBENCH_SCORES_MULTI ${PLAIN}
-  echo -e "Geekbench Result     :" ${GREEN}$GEEKBENCH_URL${PLAIN}
+  echo -e "Geekbench Result     :" ${GREEN} $GEEKBENCH_URL${PLAIN}
 	rm -rf geekbench/
 }
 
@@ -267,6 +267,7 @@ rawio3=$( echo $io3 | sed 's/MB//g' | sed 's/s//g' | sed 's/.$//')
 ioall=$( awk 'BEGIN{print '$rawio1' + '$rawio2' + '$rawio3'}' )
 ioavg=$( awk 'BEGIN{printf "%.1f", '$ioall' / 3}' )
 echo -e "Average I/O bandwidth    : ${YELLOW}$ioavg MB/s${PLAIN}"
+next
 iopsresult=$( iops512k_test )
 readarray -t y <<<"$iopsresult"
 echo -e "I/O bandwidth 512K IOPS  : ${YELLOW}Read: ${y[0]} IOPS${PLAIN}"
