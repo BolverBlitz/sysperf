@@ -4,7 +4,7 @@ A simple benchmark script to test your Disk, Network and CPU performance on Debi
 ### Usage
 You just have to run the command below.
 ```
-wget -qO- https://raw.githubusercontent.com/BolverBlitz/sysperf/master/bench | bash
+wget -qO- https://raw.githubusercontent.com/BolverBlitz/sysperf/master/bench | bash <(cat) </dev/tty
 ```
     
 If you don't get an output when running the script, make sure the following packages are installed
