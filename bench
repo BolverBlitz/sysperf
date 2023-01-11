@@ -335,9 +335,13 @@ speed_result
 next
 geekbench5
 next
+while true; do
 read -p "Do you wish to send this Score (y/n)? " yn
-case $yn in
-  [Yy]* ) send_post; break;;
-  [Nn]* ) exit;;
-  * ) echo "Please answer Yy or Nn.";;
+case $yn in 
+	[yY] ) send_post;
+		exit;;
+	[nN] ) echo exiting...;
+		exit;;
+	* ) echo invalid response;;
 esac
+done
