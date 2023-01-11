@@ -66,6 +66,8 @@ YELLOW='\033[0;33m'
 BLUE='\033[0;36m'
 PLAIN='\033[0m'
 
+# Collection Server
+COLSERVER="https://sysperf.ebg.pw"
 
 #
 #
@@ -100,7 +102,7 @@ next() {
 }
 
 speed_test() {
-    local output=$(LANG=C wget -O /dev/null -T 30 -t 1 $1 2>&1)
+    local output=$(LANG=C wget -O /dev/null -T 10 -t 1 $1 2>&1)
     local speedtest=$(printf '%s' "$output" | awk '/\/dev\/null/ {speed=$3 $4} END {gsub(/\(|\)/,"",speed); print speed}')
     local nodeName=$2
     printf "${YELLOW}%-32s${GREEN}%-24s${RED}%-14s${PLAIN}\n" "${nodeName}" "${speedtest}"
@@ -211,6 +213,57 @@ calc_disk() {
     echo ${total_size}
 }
 
+send_post() {
+  curl -i \
+    -H "Accept: application/json" \
+    -H "Content-Type:application/json" \
+    -X POST --data @<(cat <<EOF
+{
+  "Hardware": {
+    "CPU": {
+      "Model": "$cname",
+      "Cores": "$cores",
+      "Speed": "$freq"
+    },
+    "RAM": {
+      "Total": "$tram",
+      "Used": "$uram"
+    },
+    "Swap": {
+      "Total": "$swap",
+      "Used": "$uswap"
+    }
+  },
+  "Network": {
+    "ISP": "$isp",
+    "ASN": "$as",
+    "IPv6": "$ipv6"
+  },
+  "MISC": {
+    "Kernel": "$kern",
+    "OS": "$os",
+    "Arch": "$arch"
+  },
+  "BENCHMARKS": {
+    "Geekbench": {
+      "Single": "$GEEKBENCH_SCORES_SINGLE",
+      "Multi": "$GEEKBENCH_SCORES_MULTI",
+      "URL": "$GEEKBENCH_URL"
+    },
+    "IO": {
+      "Sequential_1": "$rawio1",
+      "Sequential_2": "$rawio2",
+      "Sequential_3": "$rawio3",
+      "iops_read": "${y[0]}",
+      "iops_write": "${y[1]}"
+    }
+  }
+}
+EOF
+) "$COLSERVER/api/v1/sysperf/new"
+}
+
+
 cname=$( awk -F: '/model name/ {name=$2} END {print name}' /proc/cpuinfo | sed 's/^[ \t]*//;s/[ \t]*$//' )
 cores=$( awk -F: '/model name/ {core++} END {print core}' /proc/cpuinfo )
 freq=$( awk -F: '/cpu MHz/ {freq=$2} END {print freq}' /proc/cpuinfo | sed 's/^[ \t]*//;s/[ \t]*$//' )
@@ -232,6 +285,7 @@ disk_used_size=$( calc_disk "${disk_size2[@]}" )
 clear
 next
 echo -e "${RED}getsysperf.com${PLAIN} -- ${YELLOW}https://github.com/iandk/sysperf${PLAIN}"
+echo -e "${RED}SysPerf Fork${PLAIN} -- ${YELLOW}https://github.com/BolverBlitz/sysperf${PLAIN}"
 next
 get_netinfo
 get_sys_type
@@ -277,6 +331,15 @@ printf "%-32s%-24s%-14s\n" "Location" "Latency"
 ping_result
 next
 printf "%-32s%-24s%-14s\n" "Location" "Speed"
-    
-speed_result && next
-geekbench5 && next
+speed_result
+next
+geekbench5
+next
+while true; do
+    read -p "Do you wish to send this Score? " yn
+    case $yn in
+        [Yy]* ) send_post; break;;
+        [Nn]* ) exit;;
+        * ) echo "Please answer yes or no.";;
+    esac
+done
