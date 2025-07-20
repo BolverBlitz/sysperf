@@ -44,7 +44,7 @@ fi
 
 # Check if the required packages are installed
 if  [ ! -e '/usr/bin/wget' ] || [ ! -e '/usr/bin/fio' ] || [ ! -e '/usr/bin/curl' ] || [ ! -e '/usr/bin/jq' ]; then
-    echo "Couldn't find [wget, fio, curl, jq]"    	
+    echo "Couldn't find [wget, fio, curl, jq] one or more of the required packages are not installed."    	
     read -n 1 -r -s -p  "Please press enter to install the required packages automatically" 
    
    apt update && apt install -y curl jq fio wget
@@ -153,33 +153,33 @@ iops512k_test() {
    sleep 10
 }
 
-geekbench5() {
-  # Check if system has at least 2GB RAM in order to run Geekbench 5
-  ram=$(free -m | awk '/Mem/ {print $2}')
-  if [ $ram -lt 1900 ]
+geekbench6() {
+  # Check if system has at least 2GB RAM in order to run Geekbench 6
+  ram=$(LC_ALL=C free -m | awk '/Mem/ {print $2}')
+  if [ "${ram:-0}" -lt 1900 ]
   then
-      echo "RAM:" $ram"MB"
-      echo "Error: Not enough memory available. Geekbench 5 requires as least 2GB"
+      echo "RAM: ${ram:-N/A}MB"
+      echo "Error: Not enough memory available or RAM could not be determined."
       exit 1
   fi
-	echo -e "Running Geekbench5 CPU Benchmark. This will take a few minutes..."
+	echo -e "Running Geekbench6 CPU Benchmark. This will take a few minutes..."
 	GEEKBENCH_PATH=$HOME/geekbench
 	mkdir -p $GEEKBENCH_PATH
     arch=$(uname -m)
   if [[ $arch == x86_64* ]]; then
-    echo "Geekbench v5: X64 Architecture"
-    curl -s http://cdn.geekbench.com/Geekbench-5.4.0-Linux.tar.gz  | tar xz --strip-components=1 -C $GEEKBENCH_PATH
-    GEEKBENCH_TEST=$($GEEKBENCH_PATH/geekbench5 | grep "https://browser")
+    echo "Geekbench v6: X64 Architecture"
+    curl -s https://cdn.geekbench.com/Geekbench-6.4.0-Linux.tar.gz  | tar xz --strip-components=1 -C $GEEKBENCH_PATH
+    GEEKBENCH_TEST=$($GEEKBENCH_PATH/geekbench6 | grep "https://browser")
   elif  [[ $arch == aarch64* ]]; then
-    echo "Geekbench v5: aarch64 Architecture"
-    curl -s http://cdn.geekbench.com/Geekbench-5.4.0-LinuxARMPreview.tar.gz  | tar xz --strip-components=1 -C $GEEKBENCH_PATH
-    GEEKBENCH_TEST=$($GEEKBENCH_PATH/geekbench5 | grep "https://browser")
+    echo "Geekbench v6: aarch64 Architecture"
+    curl -s https://cdn.geekbench.com/Geekbench-6.4.0-LinuxARMPreview.tar.gz  | tar xz --strip-components=1 -C $GEEKBENCH_PATH
+    GEEKBENCH_TEST=$($GEEKBENCH_PATH/geekbench6 | grep "https://browser")
   elif  [[ $arch == arm* ]]; then
-    echo "Geekbench v5: ARM Architecture"
-    curl -s http://cdn.geekbench.com/Geekbench-5.4.0-LinuxARMPreview.tar.gz  | tar xz --strip-components=1 -C $GEEKBENCH_PATH
-    GEEKBENCH_TEST=$($GEEKBENCH_PATH/geekbench5_armv7 | grep "https://browser")
+    echo "Geekbench v6: ARM Architecture"
+    curl -s https://cdn.geekbench.com/Geekbench-6.4.0-LinuxARMPreview.tar.gz  | tar xz --strip-components=1 -C $GEEKBENCH_PATH
+    GEEKBENCH_TEST=$($GEEKBENCH_PATH/geekbench6_armv7 | grep "https://browser")
   elif  [[ $arch == unknown* ]]; then
-    echo "Geekbench v5: Architecture dedection failed..."
+    echo "Geekbench v6: Architecture dedection failed..."
     return 1
   fi
 	GEEKBENCH_URL=$(echo -e $GEEKBENCH_TEST | head -1)
@@ -261,8 +261,8 @@ EOF
 }
 
 
-cname=$( awk -F: '/model name/ {name=$2} END {print name}' /proc/cpuinfo | sed 's/^[ \t]*//;s/[ \t]*$//' )
-cores=$( awk -F: '/model name/ {core++} END {print core}' /proc/cpuinfo )
+cname=$(LC_ALL=C lscpu | awk -F': +' '/^Model name/ {print $2}')
+cores=$(nproc)
 freq=$( awk -F: '/cpu MHz/ {freq=$2} END {print freq}' /proc/cpuinfo | sed 's/^[ \t]*//;s/[ \t]*$//' )
 tram=$( free -m | awk '/Mem/ {print $2}' )
 uram=$( free -m | awk '/Mem/ {print $3}' )
@@ -330,7 +330,7 @@ next
 printf "%-32s%-24s%-14s\n" "Location" "Speed"
 speed_result
 next
-geekbench5
+geekbench6
 next
 while true; do
 read -p "Do you wish to send this Score (y/n)? " yn
